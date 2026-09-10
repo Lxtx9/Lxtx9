@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <script async src="https://cloud.umami.is/script.js" data-website-id="2df4d824-e968-4bff-8743-394608a488ea"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -615,11 +616,16 @@
             right: 18px;
             font-size: 24px;
             color: var(--text-muted);
-            transition: color 0.3s ease;
+            transition: color 0.3s ease, opacity 0.3s ease;
             padding: 4px;
             z-index: 2;
         }
         .modal-close:hover { color: #fff; }
+        .modal-close.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
         .modal-content .modal-image {
             width: 100%;
             border-radius: 12px;
@@ -1243,7 +1249,7 @@
         <div class="container">
             <a href="#" class="navbar__logo" id="logoHome">梨花诗<span>の小窝</span></a>
             <ul class="navbar__links" id="navLinks">
-                <li><a href="#hero">Home</a></li>
+                <li><a href="#hero" data-nav="home">Home</a></li>
                 <li><a id="navShoeLink" style="cursor:pointer;">潮鞋</a></li>
                 <li><a href="#bento">下单咨询</a></li>
                 <li><a id="navScriptLink" style="cursor:pointer;">油猴脚本</a></li>
@@ -1455,7 +1461,7 @@
         <footer class="footer">
             <div class="container">
                 <span>&copy; 2026 梨花诗の小窝 . All rights reserved.</span>
-                <span>Made with <i class="fas fa-heart" style="color:var(--orange);"></i> in 肇庆</span>
+                <span>Made with <i class="fas fa-heart" style="color:var(--orange);"></i> in 新加坡</span>
             </div>
         </footer>
     </div>
@@ -1645,10 +1651,9 @@
                     <div class="sc-circle" style="width: 70px; height: 70px; right: -25px; top: 50%; transform: translateY(-50%);"></div>
                 </div>
 
-         
             <footer class="footer" style="margin-top:60px;border-radius:var(--radius-card);border-top:1px solid var(--border-subtle);">
                 <div class="container" style="padding:0;">
-                    <span>&copy; 2026 梨花诗の小窝 · 脚本推荐</span>
+                    <span>&copy; 2026 梨花诗の小窝·脚本合集</span>
                 </div>
             </footer>
         </div>
@@ -1676,11 +1681,11 @@
 
     <div class="modal-overlay" id="thanksModal">
         <div class="modal-content">
-            <button class="modal-close" id="thanksModalClose">&times;</button>
+            <button class="modal-close disabled" id="thanksModalClose">&times;</button>
             <div class="modal-image">
-                <img src="https://tencentcdna.production.link3.cc/user_create_images/link3_1707261911540/customize_brand_info/1787305294995" alt="感谢赞赏" loading="lazy" decoding="async" onerror="this.style.display='none'" />
+                <img src="https://tencentcdna.production.link3.cc/user_create_images/link3_1707261911540/customize_brand_info/1787305294995" alt="脚本长期公益，从未收费过一分钱。有能力的兄弟麻烦赞助一下吧🙏🏻🙏🏻" loading="lazy" decoding="async" onerror="this.style.display='none'" />
             </div>
-            <div class="modal-hint modal-hint--red">感谢赞赏</div>
+            <div class="modal-hint modal-hint--red">脚本长期公益，从未收费过一分钱。有能力的兄弟麻烦赞助一下吧🙏🏻🙏🏻</div>
         </div>
     </div>
 
@@ -1700,6 +1705,7 @@
 
         let revealObserver = null;
         let isScriptViewActive = false;
+        let thanksLocked = false;
 
         function initReveal() {
             const reveals = document.querySelectorAll('.reveal');
@@ -1738,7 +1744,7 @@
             }, 50);
             closeMobileMenu();
             setTimeout(() => {
-                openModal('thanksModal');
+                openThanksModal();
             }, 350);
         }
 
@@ -1775,6 +1781,19 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
+
+        const homeNavLink = document.querySelector('.navbar__links a[data-nav="home"]');
+        if (homeNavLink) {
+            homeNavLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (isScriptViewActive) {
+                    showMainView();
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                closeMobileMenu();
+            });
+        }
 
         initReveal();
 
@@ -1823,10 +1842,17 @@
         scCards.forEach(card => {
             card.addEventListener('click', function() {
                 const link = this.dataset.link;
+                const scriptNameEl = this.querySelector('.sc-card__info h4');
+                const scriptName = scriptNameEl ? scriptNameEl.textContent.trim() : '未知脚本';
                 if (!link || link === '#') {
                     showToast('请先设置脚本链接');
                     return;
                 }
+                try {
+                    if (window.umami && typeof window.umami.track === 'function') {
+                        window.umami.track('脚本点击 - ' + scriptName);
+                    }
+                } catch (e) {}
                 copyToClipboard(link, this);
             });
         });
@@ -1839,15 +1865,31 @@
             const m = document.getElementById(id);
             if (m) { m.classList.remove('active'); }
         }
+
+        function openThanksModal() {
+            thanksLocked = true;
+            const btn = document.getElementById('thanksModalClose');
+            if (btn) btn.classList.add('disabled');
+            openModal('thanksModal');
+            setTimeout(() => {
+                thanksLocked = false;
+                if (btn) btn.classList.remove('disabled');
+            }, 2000);
+        }
+
         document.querySelectorAll('.modal-overlay').forEach(o => {
             o.addEventListener('click', function(e) {
                 if (e.target === this) {
+                    if (this.id === 'thanksModal' && thanksLocked) return;
                     this.classList.remove('active');
                 }
             });
         });
 
-        document.getElementById('thanksModalClose').addEventListener('click', () => closeModal('thanksModal'));
+        document.getElementById('thanksModalClose').addEventListener('click', function() {
+            if (thanksLocked) return;
+            closeModal('thanksModal');
+        });
 
         document.querySelectorAll('.btn-add').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -1971,7 +2013,7 @@
             toggle.classList.toggle('active');
             links.classList.toggle('open');
         });
-        document.querySelectorAll('.navbar__links a:not(#navShoeLink):not(#navScriptLink)').forEach(a => {
+        document.querySelectorAll('.navbar__links a:not(#navShoeLink):not(#navScriptLink):not([data-nav="home"])').forEach(a => {
             a.addEventListener('click', closeMobileMenu);
         });
 
@@ -2015,7 +2057,7 @@
             if (Math.abs(diff) > 40) { diff > 0 ? next() : prev(); resetAuto(); }
         }, { passive: true });
 
-        document.querySelectorAll('a[href^="#"]:not(#navShoeLink):not(#navScriptLink)').forEach(a => {
+        document.querySelectorAll('a[href^="#"]:not(#navShoeLink):not(#navScriptLink):not([data-nav="home"])').forEach(a => {
             a.addEventListener('click', function(e) {
                 const t = document.querySelector(this.getAttribute('href'));
                 if (t) {
