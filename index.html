@@ -190,36 +190,15 @@
             position: relative;
             z-index: 1;
         }
-        .script-view {
-            display: block;
-            min-height: 100vh;
-            padding: 120px 0 80px;
-            opacity: 0;
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            transition: opacity 0.35s ease;
-            will-change: opacity;
-        }
+        .main-view.hidden { display: none; }
+        .script-view { display: none; min-height: 100vh; padding: 120px 0 80px; }
         .script-view.active {
-            opacity: 1;
-            pointer-events: auto;
-            position: relative;
+            display: block;
+            animation: pageFadeIn 0.4s ease;
         }
-        .main-view {
-            opacity: 1;
-            transition: opacity 0.35s ease;
-            will-change: opacity;
-        }
-        .main-view.hidden {
-            opacity: 0;
-            pointer-events: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+        @keyframes pageFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .hero {
@@ -616,18 +595,25 @@
             inset: 0;
             z-index: 9999;
             background: rgba(0, 0, 0, 0.75);
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
             padding: 24px;
-            will-change: opacity;
         }
         .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
+            display: flex;
+            animation: modalFadeIn 0.3s ease;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-overlay.active .modal-content {
+            animation: modalSlideUp 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        @keyframes modalSlideUp {
+            from { transform: scale(0.95) translateY(20px); }
+            to { transform: scale(1) translateY(0); }
         }
         .modal-content {
             background: #0c0c0c;
@@ -637,11 +623,8 @@
             max-width: 480px;
             width: 100%;
             position: relative;
-            transform: scale(0.95) translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7);
         }
-        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
         .modal-close {
             position: absolute;
             top: 14px;
@@ -1778,7 +1761,7 @@
             closeMobileMenu();
             setTimeout(() => {
                 openThanksModal();
-            }, 350);
+            }, 400);
         }
 
         function goBackToMain() {
@@ -1892,18 +1875,11 @@
 
         function openModal(id) {
             const m = document.getElementById(id);
-            if (m) {
-                const sw = window.innerWidth - document.documentElement.clientWidth;
-                if (sw > 0) document.body.style.paddingRight = sw + 'px';
-                m.classList.add('active');
-            }
+            if (m) m.classList.add('active');
         }
         function closeModal(id) {
             const m = document.getElementById(id);
-            if (m) {
-                m.classList.remove('active');
-                document.body.style.paddingRight = '';
-            }
+            if (m) m.classList.remove('active');
         }
 
         function openThanksModal() {
@@ -1922,7 +1898,6 @@
                 if (e.target === this) {
                     if (this.id === 'thanksModal' && thanksLocked) return;
                     this.classList.remove('active');
-                    document.body.style.paddingRight = '';
                 }
             });
         });
