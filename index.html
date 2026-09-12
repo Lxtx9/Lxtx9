@@ -190,9 +190,37 @@
             position: relative;
             z-index: 1;
         }
-        .script-view { display: none; min-height: 100vh; padding: 120px 0 80px; }
-        .script-view.active { display: block; }
-        .main-view.hidden { display: none; }
+        .script-view {
+            display: block;
+            min-height: 100vh;
+            padding: 120px 0 80px;
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            transition: opacity 0.35s ease;
+            will-change: opacity;
+        }
+        .script-view.active {
+            opacity: 1;
+            pointer-events: auto;
+            position: relative;
+        }
+        .main-view {
+            opacity: 1;
+            transition: opacity 0.35s ease;
+            will-change: opacity;
+        }
+        .main-view.hidden {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
 
         .hero {
             position: relative;
@@ -592,11 +620,15 @@
             align-items: center;
             justify-content: center;
             opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
             padding: 24px;
+            will-change: opacity;
         }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
         .modal-content {
             background: #0c0c0c;
             border: 1px solid var(--border-subtle);
@@ -1860,11 +1892,18 @@
 
         function openModal(id) {
             const m = document.getElementById(id);
-            if (m) { m.classList.add('active'); }
+            if (m) {
+                const sw = window.innerWidth - document.documentElement.clientWidth;
+                if (sw > 0) document.body.style.paddingRight = sw + 'px';
+                m.classList.add('active');
+            }
         }
         function closeModal(id) {
             const m = document.getElementById(id);
-            if (m) { m.classList.remove('active'); }
+            if (m) {
+                m.classList.remove('active');
+                document.body.style.paddingRight = '';
+            }
         }
 
         function openThanksModal() {
@@ -1883,6 +1922,7 @@
                 if (e.target === this) {
                     if (this.id === 'thanksModal' && thanksLocked) return;
                     this.classList.remove('active');
+                    document.body.style.paddingRight = '';
                 }
             });
         });
